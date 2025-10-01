@@ -42,7 +42,7 @@ const createUserToDB = async (payload: Partial<IUser>): Promise<IUser> => {
 
 const retrieveProfileFromDB = async (user: JwtPayload): Promise<Partial<IUser>> => {
 
-    const isExistUser: any = await User.findById(user.id).select("name email profile accountInformation contact")
+    const isExistUser: any = await User.findById(user.id).lean().exec();
     if (!isExistUser) {
         throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
     }

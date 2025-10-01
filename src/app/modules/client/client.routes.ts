@@ -53,4 +53,22 @@ router.route('/summary')
         ClientController.retrieveSummary
     );
 
+router.route('/statistic')
+    .get(
+        auth(USER_ROLES.SUPER_ADMIN),
+        ClientController.clientStatics
+    );
+
+router.route('/active-statistic')
+    .get(
+        auth(USER_ROLES.SUPER_ADMIN),
+        ClientController.activeClientStatics
+    );
+
+router.route('/:id')
+    .patch(
+        auth(USER_ROLES.SUPER_ADMIN),
+        ClientController.deactivedClient
+    );
+
 export const ClientRoutes = router;

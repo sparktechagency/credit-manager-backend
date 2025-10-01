@@ -5,6 +5,7 @@ import { Transaction } from './transaction.model';
 import { FilterQuery } from 'mongoose';
 import QueryBuilder from '../../../helpers/QueryBuilder';
 import { Client } from "../client/client.model";
+import { IClient } from "../client/client.interface";
 
 
 const addCreditToDB = async (id:string, payload: ITransaction): Promise<ITransaction> => {
@@ -37,19 +38,15 @@ const addCreditToDB = async (id:string, payload: ITransaction): Promise<ITransac
 
 const dueCreditToDB = async (id:string, payload: ITransaction): Promise<ITransaction> => {
 
-    const isExistClient = await Client.findOne({ client: id });
+    const isExistClient = await Client.findById(id);
 
     if (!isExistClient) {
         throw new ApiError(StatusCodes.BAD_REQUEST, "Client doesn't exist");
     }
 
-    if(isExistClient.credit < payload.amount || isExistClient.credit < 1){
-        throw new ApiError(StatusCodes.BAD_REQUEST, "Client doesn't have sufficient credit");
-    }
-
     const updateCredit = Number(isExistClient.credit) - Number(payload.amount);
 
-    const addCredit = await Client.findOneAndUpdate({ _id: payload.client }, { credit: updateCredit }, {
+    const addCredit = await Client.findOneAndUpdate({ _id: id }, { credit: updateCredit }, {
         new: true,
     })
 
@@ -103,9 +100,101 @@ const updateTransactionsToDB = async (id: string, payload: ITransaction): Promis
     return updateTransaction
 };
 
+const clientTransactionFromDB = async (id:string, query: FilterQuery<any>): Promise<object> => {
+
+    const isExistClient = await Client.findById(id).lean().exec();
+    if(!isExistClient){
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Client');
+    }
+
+    const ClientTransactionQuery = new QueryBuilder(
+        Transaction.find({client: id}),
+        query
+    ).paginate();
+
+    const [transactions, pagination] = await Promise.all([
+        ClientTransactionQuery.queryModel
+            .populate()
+            .lean()
+            .exec(),
+        ClientTransactionQuery.getPaginationInfo(),
+    ]);
+
+    const  client = {
+        ...isExistClient,
+        transactions,
+        pagination
+    }
+
+    return client;
+};
+
+const transactionStatisticsFromDB = async () => {
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    // Initialize array with 0 values
+    const transactionStatisticsArray = Array.from({ length: 12 }, (_, i) => ({
+        month: monthNames[i],
+        credit: 0,
+        paid: 0,
+    }));
+
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const endOfYear = new Date(now.getFullYear() + 1, 0, 1);
+
+    // Credit analytics
+    const creditAnalytics = await Transaction.aggregate([
+        {
+            $match: {
+                type: "credit",
+                createdAt: { $gte: startOfYear, $lt: endOfYear }
+            }
+        },
+        {
+            $group: {
+                _id: { month: { $month: "$createdAt" } },
+                totalAmount: { $sum: "$amount" }
+            }
+        }
+    ]);
+
+    // Paid analytics
+    const paidAnalytics = await Transaction.aggregate([
+        {
+            $match: {
+                type: "paid",
+                createdAt: { $gte: startOfYear, $lt: endOfYear }
+            }
+        },
+        {
+            $group: {
+                _id: { month: { $month: "$createdAt" } },
+                totalAmount: { $sum: "$amount" }
+            }
+        }
+    ]);
+
+    // Populate credit statistics
+    creditAnalytics.forEach(stat => {
+        const monthIndex = stat._id.month - 1;
+        transactionStatisticsArray[monthIndex].credit = stat.totalAmount;
+    });
+
+    // Populate paid statistics
+    paidAnalytics.forEach(stat => {
+        const monthIndex = stat._id.month - 1;
+        transactionStatisticsArray[monthIndex].paid = stat.totalAmount;
+    });
+
+    return transactionStatisticsArray;
+};
+
 export const TransactionService = {
     addCreditToDB,
     dueCreditToDB,
     retrieveTransactionsFromDB,
-    updateTransactionsToDB
+    updateTransactionsToDB,
+    clientTransactionFromDB,
+    transactionStatisticsFromDB
 };

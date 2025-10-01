@@ -56,7 +56,8 @@ const ClientSchema = new Schema<IClient, ClientModel>(
         timestamps: true
     }
 );
-//check user
+
+
 ClientSchema.pre('save', async function (next) {
 
     //check user

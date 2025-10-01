@@ -50,9 +50,46 @@ const updateClientProfile = catchAsync( async (req: Request, res: Response, next
     });
 });
 
+
+const deactivedClient = catchAsync( async (req: Request, res: Response, next: NextFunction) => {
+    const result = await ClientService.deactivedClientToDB(req.params.id);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: 'Active successfully',
+        data: result
+    });
+});
+
+const clientStatics = catchAsync( async (req: Request, res: Response, next: NextFunction) => {
+    const result = await ClientService.clientStatisticsFromDB();
+
+    sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: 'Client Statistic Retrieved',
+        data: result
+    });
+});
+
+const activeClientStatics = catchAsync( async (req: Request, res: Response, next: NextFunction) => {
+    const result = await ClientService.retrieveActiveClientsFromDB(req.query);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: 'Client Statistic Retrieved',
+        data: result
+    });
+});
+
 export const ClientController = { 
     createClients,
     retrieveClients, 
     updateClientProfile,
-    retrieveSummary
+    retrieveSummary,
+    deactivedClient,
+    clientStatics,
+    activeClientStatics
 };

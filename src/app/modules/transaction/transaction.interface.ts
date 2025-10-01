@@ -5,6 +5,7 @@ export type ITransaction = {
     client: Types.ObjectId;
     amount: number;
     type: 'credit' | 'paid';
+    txid: string;
     description?: string;
 }
 

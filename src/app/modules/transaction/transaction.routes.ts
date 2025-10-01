@@ -28,7 +28,18 @@ router.route('/')
     );
 
 
+router.route("/statistic")
+    .get(
+        auth(USER_ROLES.SUPER_ADMIN),
+        ClientController.transactionStatistics
+    )
+
+
 router.route('/:id')
+    .get(
+        auth(USER_ROLES.SUPER_ADMIN),
+        ClientController.clientTransaction
+    )
     .patch(
         auth(USER_ROLES.SUPER_ADMIN),
         async (req: Request, res: Response, next: NextFunction) => {
@@ -51,7 +62,23 @@ router.route('/:id')
     )   
     .put(
         auth(USER_ROLES.SUPER_ADMIN),
-        ClientController.addCredit
+        async (req: Request, res: Response, next: NextFunction) => {
+            try {
+
+                const { amount } = req.body;
+                req.body = {
+                    ...req.body,
+                    client: req.params.id,
+                    type: 'paid',
+                    amount: Number(amount)
+                };
+                next();
+
+            } catch (error) {
+                res.status(500).json({ message: "Failed to Process Update Transaction" });
+            }
+        },
+        ClientController.dueCredit
     )
 
 export const TransactionRoutes = router;

@@ -48,10 +48,35 @@ const updateTransaction = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const clientTransaction = catchAsync(async (req: Request, res: Response) => {
+    const result = await TransactionService.clientTransactionFromDB(req.params.id, req.query);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: 'Retrieved Client Info and transactions successfully',
+        data: result
+    });
+});
+
+const transactionStatistics = catchAsync(async (req: Request, res: Response) => {
+    const result = await TransactionService.transactionStatisticsFromDB();
+
+    sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: 'Retrieved transactions statistic successfully',
+        data: result
+    });
+});
+
+
 
 export const ClientController = { 
     addCredit,
     dueCredit,
     retrieveTransactions,
-    updateTransaction
+    updateTransaction,
+    clientTransaction,
+    transactionStatistics
 };

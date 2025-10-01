@@ -17,7 +17,7 @@ const createClients = catchAsync( async (req: Request, res: Response, next: Next
 });
 
 const retrieveClients = catchAsync(async (req: Request, res: Response) => {
-    const result = await ClientService.retrieveClientsFromDB(req.user as JwtPayload,);
+    const result = await ClientService.retrieveClientsFromDB(req.query);
 
     sendResponse(res, {
         success: true,

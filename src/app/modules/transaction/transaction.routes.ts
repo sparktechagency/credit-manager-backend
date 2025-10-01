@@ -40,6 +40,14 @@ router.route('/:id')
         auth(USER_ROLES.SUPER_ADMIN),
         ClientController.clientTransaction
     )
+    .post(
+        auth(USER_ROLES.SUPER_ADMIN),
+        ClientController.updateTransaction
+    )
+    .delete(
+        auth(USER_ROLES.SUPER_ADMIN),
+        ClientController.deleteTransaction
+    )
     .patch(
         auth(USER_ROLES.SUPER_ADMIN),
         async (req: Request, res: Response, next: NextFunction) => {

@@ -8,7 +8,7 @@ import { Client } from "../client/client.model";
 import { IClient } from "../client/client.interface";
 
 
-const addCreditToDB = async (id:string, payload: ITransaction): Promise<ITransaction> => {
+const addCreditToDB = async (id: string, payload: ITransaction): Promise<ITransaction> => {
 
     const isExistClient = await Client.findById(id);
 
@@ -36,7 +36,7 @@ const addCreditToDB = async (id:string, payload: ITransaction): Promise<ITransac
 };
 
 
-const dueCreditToDB = async (id:string, payload: ITransaction): Promise<ITransaction> => {
+const dueCreditToDB = async (id: string, payload: ITransaction): Promise<ITransaction> => {
 
     const isExistClient = await Client.findById(id);
 
@@ -77,38 +77,18 @@ const retrieveTransactionsFromDB = async (query: FilterQuery<any>): Promise<{ tr
         TransactionQuery.getPaginationInfo(),
     ]);
 
-
     return { transactions, pagination }
 };
 
-const updateTransactionsToDB = async (id: string, payload: ITransaction): Promise<ITransaction> => {
-
-    const isExistTransaction = await Transaction.findById(id);
-
-    if (!isExistTransaction) {
-        throw new ApiError(StatusCodes.BAD_REQUEST, "Transaction doesn't exist");
-    }
-
-    const updateTransaction = await Transaction.findOneAndUpdate({ _id: id }, payload, {
-        new: true,
-    })
-
-    if (!updateTransaction) {
-        throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to update transaction');
-    }
-
-    return updateTransaction
-};
-
-const clientTransactionFromDB = async (id:string, query: FilterQuery<any>): Promise<object> => {
+const clientTransactionFromDB = async (id: string, query: FilterQuery<any>): Promise<object> => {
 
     const isExistClient = await Client.findById(id).lean().exec();
-    if(!isExistClient){
+    if (!isExistClient) {
         throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Client');
     }
 
     const ClientTransactionQuery = new QueryBuilder(
-        Transaction.find({client: id}),
+        Transaction.find({ client: id }),
         query
     ).paginate();
 
@@ -120,7 +100,7 @@ const clientTransactionFromDB = async (id:string, query: FilterQuery<any>): Prom
         ClientTransactionQuery.getPaginationInfo(),
     ]);
 
-    const  client = {
+    const client = {
         ...isExistClient,
         transactions,
         pagination
@@ -190,11 +170,39 @@ const transactionStatisticsFromDB = async () => {
     return transactionStatisticsArray;
 };
 
+
+const deleteTransactionsFromDB = async (id: string): Promise<ITransaction> => {
+    const deletedTransaction = await Transaction.findByIdAndDelete(id).lean().exec();
+
+    if (!deletedTransaction) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "Transaction not found");
+    }
+
+    return deletedTransaction;
+};
+
+
+const updateTransactionsFromDB = async (id: string, amount: number): Promise<ITransaction> => {
+    const updatedTransaction = await Transaction.findByIdAndUpdate(
+        id,
+        { $set: { amount } },
+        { new: true, lean: true }
+    ).exec();
+
+    if (!updatedTransaction) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "Transaction not found");
+    }
+
+    return updatedTransaction;
+};
+
+
 export const TransactionService = {
     addCreditToDB,
     dueCreditToDB,
     retrieveTransactionsFromDB,
-    updateTransactionsToDB,
     clientTransactionFromDB,
-    transactionStatisticsFromDB
+    transactionStatisticsFromDB,
+    updateTransactionsFromDB,
+    deleteTransactionsFromDB
 };

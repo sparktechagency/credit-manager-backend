@@ -37,17 +37,6 @@ const retrieveTransactions = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-const updateTransaction = catchAsync(async (req: Request, res: Response) => {
-    const result = await TransactionService.updateTransactionsToDB(req.params.id, req.body);
-
-    sendResponse(res, {
-        success: true,
-        statusCode: StatusCodes.OK,
-        message: 'Retrieved transactions successfully',
-        data: result
-    });
-});
-
 const clientTransaction = catchAsync(async (req: Request, res: Response) => {
     const result = await TransactionService.clientTransactionFromDB(req.params.id, req.query);
 
@@ -71,6 +60,28 @@ const transactionStatistics = catchAsync(async (req: Request, res: Response) => 
 });
 
 
+const updateTransaction = catchAsync(async (req: Request, res: Response) => {
+    const result = await TransactionService.updateTransactionsFromDB(req.params.id, req.body.amount);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: 'Transaction Updated successfully',
+        data: result
+    });
+});
+
+const deleteTransaction = catchAsync(async (req: Request, res: Response) => {
+    const result = await TransactionService.deleteTransactionsFromDB(req.params.id);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: 'Transaction Deleted successfully',
+        data: result
+    });
+});
+
 
 export const ClientController = { 
     addCredit,
@@ -78,5 +89,6 @@ export const ClientController = {
     retrieveTransactions,
     updateTransaction,
     clientTransaction,
-    transactionStatistics
+    transactionStatistics,
+    deleteTransaction
 };

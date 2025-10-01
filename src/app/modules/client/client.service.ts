@@ -23,7 +23,10 @@ const retrieveClientsFromDB = async (query: FilterQuery<any>): Promise<{ clients
     const TransactionQuery = new QueryBuilder(
         Client.find(),
         query
-    ).paginate();
+    )
+    .paginate()
+    .filter()
+    .search(["name", "email", "address", "contact"]);
 
     const [clients, pagination] = await Promise.all([
         TransactionQuery.queryModel
@@ -63,12 +66,12 @@ const retrieveClientsFromDB = async (query: FilterQuery<any>): Promise<{ clients
                 }
             }
         ]);
-        const balance = Number(credit[0].totalCredit || 0) - Number(paid[0].totalPaid || 0);
+        const balance = Number(credit[0]?.totalCredit || 0) - Number(paid[0]?.totalPaid || 0);
         return {
             ...client,
             balance,
-            totalCredit: credit[0].totalCredit || 0,
-            totalPaid: paid[0].totalPaid || 0
+            totalCredit: credit[0]?.totalCredit || 0,
+            totalPaid: paid[0]?.totalPaid || 0
         }
     }))
 
@@ -121,12 +124,12 @@ const retrieveActiveClientsFromDB = async (query: FilterQuery<any>): Promise<{ c
                 }
             }
         ]);
-        const balance = Number(credit[0].totalCredit || 0) - Number(paid[0].totalPaid || 0);
+        const balance = Number(credit[0]?.totalCredit || 0) - Number(paid[0]?.totalPaid || 0);
         return {
             ...client,
             balance,
-            totalCredit: credit[0].totalCredit || 0,
-            totalPaid: paid[0].totalPaid || 0
+            totalCredit: credit[0]?.totalCredit || 0,
+            totalPaid: paid[0]?.totalPaid || 0
         }
     }))
 

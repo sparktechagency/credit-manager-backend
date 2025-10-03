@@ -61,22 +61,114 @@ const dueCreditToDB = async (id: string, payload: ITransaction): Promise<ITransa
     return transaction;
 };
 
-const retrieveTransactionsFromDB = async (query: FilterQuery<any>): Promise<{ transactions: ITransaction[], pagination: any }> => {
+const retrieveTransactionsFromDB = async (query: FilterQuery<any>): Promise<{}> => {
+
+    const { date } = query;
+
+    let match: any = {};
+
+    if (date) {
+        const start = new Date(date);
+        start.setHours(0, 0, 0, 0);
+
+        const end = new Date(date);
+        end.setHours(23, 59, 59, 999);
+
+        match.createdAt = { $gte: start, $lte: end };
+    }
 
     const TransactionQuery = new QueryBuilder(
         Transaction.find(),
         query
-    ).paginate();
+    )
+        .paginate()
+        .filter(match)
 
     const [transactions, pagination] = await Promise.all([
         TransactionQuery.queryModel
-            .populate()
+            .populate("client")
             .lean()
             .exec(),
         TransactionQuery.getPaginationInfo(),
     ]);
 
-    return { transactions, pagination }
+
+    const result = await Promise.all(transactions.map(async (transaction: ITransaction) => {
+        const credit = await Transaction.aggregate([
+            {
+                $match: {
+                    client: transaction.client?._id,
+                    type: "credit",
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalCredit: { $sum: "$amount" }
+                }
+            }
+        ]);
+
+        const paid = await Transaction.aggregate([
+            {
+                $match: {
+                    client: transaction.client?._id,
+                    type: "paid",
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalPaid: { $sum: "$amount" }
+                }
+            }
+        ]);
+
+        const balance = Number(credit[0]?.totalCredit || 0) - Number(paid[0]?.totalPaid || 0);
+
+        return {
+            ...transaction,
+            balance
+        }
+    }))
+
+    const credit = await Transaction.aggregate([
+        {
+            $match: {
+                type: "credit",
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalCredit: { $sum: "$amount" }
+            }
+        }
+    ]);
+
+    const paid = await Transaction.aggregate([
+        {
+            $match: {
+                type: "paid",
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalPaid: { $sum: "$amount" }
+            }
+        }
+    ]);
+
+    const data = {
+        transactions: result,
+        totalCredit: credit[0]?.totalCredit || 0,
+        totalPaid: paid[0]?.totalPaid || 0,
+        balance : Number(credit[0]?.totalCredit || 0) - Number(paid[0]?.totalPaid || 0),
+        pagination
+    }
+
+    return data
 };
 
 const clientTransactionFromDB = async (id: string, query: FilterQuery<any>): Promise<object> => {
@@ -105,9 +197,9 @@ const clientTransactionFromDB = async (id: string, query: FilterQuery<any>): Pro
         Transaction.find({ client: id }),
         query
     )
-    .filter(match)
-    .paginate()
-    .search(["name", "email", "contact", "type"])
+        .filter(match)
+        .paginate()
+        .search(["name", "email", "contact", "type"])
 
     const [transactions, pagination] = await Promise.all([
         ClientTransactionQuery.queryModel
@@ -186,11 +278,14 @@ const clientTransactionFromDB = async (id: string, query: FilterQuery<any>): Pro
         }
     ]);
 
+    const balance = Number(credit[0]?.totalCredit || 0) - Number(paid[0]?.totalPaid || 0);
+
     const client = {
         ...isExistClient,
         transactions: result,
         totalCredit: credit[0]?.totalCredit || 0,
         totalPaid: paid[0]?.totalPaid || 0,
+        balance,
         pagination
     }
 

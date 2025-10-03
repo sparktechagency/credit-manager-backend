@@ -27,7 +27,7 @@ const dueCredit = catchAsync( async (req: Request, res: Response, next: NextFunc
 });
 
 const retrieveTransactions = catchAsync(async (req: Request, res: Response) => {
-    const result = await TransactionService.retrieveTransactionsFromDB(req.user as JwtPayload,);
+    const result = await TransactionService.retrieveTransactionsFromDB(req.query);
 
     sendResponse(res, {
         success: true,

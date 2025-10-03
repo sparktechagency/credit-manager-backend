@@ -40,7 +40,7 @@ const retrieveSummary = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateClientProfile = catchAsync( async (req: Request, res: Response, next: NextFunction) => {
-    const result = await ClientService.updateClientProfileToDB(req.user as JwtPayload, req.body);
+    const result = await ClientService.updateClientProfileToDB(req.params.id, req.body);
 
     sendResponse(res, {
         success: true,

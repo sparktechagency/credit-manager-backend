@@ -69,6 +69,10 @@ router.route('/:id')
     .patch(
         auth(USER_ROLES.SUPER_ADMIN),
         ClientController.deactivedClient
-    );
+    )
+    .put(
+        auth(USER_ROLES.SUPER_ADMIN),
+        ClientController.updateClientProfile
+    )
 
 export const ClientRoutes = router;

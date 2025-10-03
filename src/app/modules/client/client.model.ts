@@ -15,6 +15,7 @@ const ClientSchema = new Schema<IClient, ClientModel>(
         email: {
             type: String,
             required: true,
+            immutable: true,
             unique: true,
             lowercase: true,
         },

@@ -2,10 +2,11 @@ import { StatusCodes } from "http-status-codes";
 import ApiError from "../../../errors/ApiErrors";
 import { ITransaction } from './transaction.interface';
 import { Transaction } from './transaction.model';
-import { FilterQuery } from 'mongoose';
+import mongoose, { FilterQuery } from 'mongoose';
 import QueryBuilder from '../../../helpers/QueryBuilder';
 import { Client } from "../client/client.model";
 import { IClient } from "../client/client.interface";
+import moment from "moment";
 
 
 const addCreditToDB = async (id: string, payload: ITransaction): Promise<ITransaction> => {
@@ -87,10 +88,28 @@ const clientTransactionFromDB = async (id: string, query: FilterQuery<any>): Pro
         throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid Client');
     }
 
+
+    const { date } = query;
+
+    let match: any = {};
+
+    if (date) {
+        const start = new Date(date);
+        start.setHours(0, 0, 0, 0);
+
+        const end = new Date(date);
+        end.setHours(23, 59, 59, 999);
+
+        match.createdAt = { $gte: start, $lte: end };
+    }
+
     const ClientTransactionQuery = new QueryBuilder(
         Transaction.find({ client: id }),
         query
-    ).paginate();
+    )
+    .filter(match)
+    .paginate()
+    .search(["name", "email", "contact", "type"])
 
     const [transactions, pagination] = await Promise.all([
         ClientTransactionQuery.queryModel
@@ -100,9 +119,80 @@ const clientTransactionFromDB = async (id: string, query: FilterQuery<any>): Pro
         ClientTransactionQuery.getPaginationInfo(),
     ]);
 
+    const result = await Promise.all(transactions.map(async (transaction: ITransaction) => {
+        const credit = await Transaction.aggregate([
+            {
+                $match: {
+                    client: transaction.client,
+                    type: "credit",
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalCredit: { $sum: "$amount" }
+                }
+            }
+        ]);
+
+        const paid = await Transaction.aggregate([
+            {
+                $match: {
+                    client: transaction.client,
+                    type: "paid",
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalPaid: { $sum: "$amount" }
+                }
+            }
+        ]);
+
+        const balance = Number(credit[0]?.totalCredit || 0) - Number(paid[0]?.totalPaid || 0);
+
+        return {
+            ...transaction,
+            balance
+        }
+    }))
+
+    const credit = await Transaction.aggregate([
+        {
+            $match: {
+                client: new mongoose.Types.ObjectId(id),
+                type: "credit",
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalCredit: { $sum: "$amount" }
+            }
+        }
+    ]);
+
+    const paid = await Transaction.aggregate([
+        {
+            $match: {
+                client: new mongoose.Types.ObjectId(id),
+                type: "paid",
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalPaid: { $sum: "$amount" }
+            }
+        }
+    ]);
+
     const client = {
         ...isExistClient,
-        transactions,
+        transactions: result,
+        totalCredit: credit[0]?.totalCredit || 0,
+        totalPaid: paid[0]?.totalPaid || 0,
         pagination
     }
 

@@ -4,7 +4,7 @@ import { Client } from "./client.model";
 import { StatusCodes } from "http-status-codes";
 import ApiError from "../../../errors/ApiErrors";
 import unlinkFile from "../../../shared/unlinkFile";
-import { FilterQuery } from "mongoose";
+import mongoose, { FilterQuery, mongo } from "mongoose";
 import QueryBuilder from "../../../helpers/QueryBuilder";
 import { Transaction } from "../transaction/transaction.model";
 
@@ -184,20 +184,15 @@ const transactionSummaryFromDB = async (): Promise<{ totalCredit: number, balanc
 }
 
 
-const updateClientProfileToDB = async (client: JwtPayload, payload: Partial<IClient>): Promise<Partial<IClient | null>> => {
-
-    const isExistUser = await Client.findById(client.id);
+const updateClientProfileToDB = async (client: string, payload: Partial<IClient>): Promise<Partial<IClient | null>> => {
+    const id = new mongoose.Types.ObjectId(client);
+    const isExistUser = await Client.findById(id);
     if (!isExistUser) {
         throw new ApiError(StatusCodes.BAD_REQUEST, "Client doesn't exist!");
     }
 
-    //unlink file here
-    if (payload.profile) {
-        unlinkFile(isExistUser.profile);
-    }
-
     const updateDoc = await Client.findOneAndUpdate(
-        { _id: client.id },
+        { _id: id },
         payload,
         { new: true }
     );

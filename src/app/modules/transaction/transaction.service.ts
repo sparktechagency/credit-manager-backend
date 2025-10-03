@@ -5,8 +5,6 @@ import { Transaction } from './transaction.model';
 import mongoose, { FilterQuery } from 'mongoose';
 import QueryBuilder from '../../../helpers/QueryBuilder';
 import { Client } from "../client/client.model";
-import { IClient } from "../client/client.interface";
-import moment from "moment";
 
 
 const addCreditToDB = async (id: string, payload: ITransaction): Promise<ITransaction> => {

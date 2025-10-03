@@ -3,7 +3,6 @@ import { JwtPayload } from 'jsonwebtoken';
 import { Client } from "./client.model";
 import { StatusCodes } from "http-status-codes";
 import ApiError from "../../../errors/ApiErrors";
-import unlinkFile from "../../../shared/unlinkFile";
 import mongoose, { FilterQuery, mongo } from "mongoose";
 import QueryBuilder from "../../../helpers/QueryBuilder";
 import { Transaction } from "../transaction/transaction.model";
@@ -145,7 +144,6 @@ const transactionSummaryFromDB = async (): Promise<{ totalCredit: number, balanc
     const credit = await Transaction.aggregate([
         {
             $match: {
-                client: { $in: clientsIDs },
                 type: "credit",
             }
         },
@@ -161,7 +159,6 @@ const transactionSummaryFromDB = async (): Promise<{ totalCredit: number, balanc
     const paid = await Transaction.aggregate([
         {
             $match: {
-                client: { $in: clientsIDs },
                 type: "paid",
             }
         },

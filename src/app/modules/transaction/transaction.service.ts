@@ -78,7 +78,7 @@ const retrieveTransactionsFromDB = async (query: FilterQuery<any>): Promise<{}> 
     }
 
     const TransactionQuery = new QueryBuilder(
-        Transaction.find(),
+        Transaction.find().sort({createdAt: -1}),
         query
     )
         .paginate()
@@ -88,7 +88,8 @@ const retrieveTransactionsFromDB = async (query: FilterQuery<any>): Promise<{}> 
         TransactionQuery.queryModel
             .populate("client")
             .lean()
-            .exec(),
+            .exec()
+            ,
         TransactionQuery.getPaginationInfo(),
     ]);
 
@@ -194,7 +195,7 @@ const clientTransactionFromDB = async (id: string, query: FilterQuery<any>): Pro
     }
 
     const ClientTransactionQuery = new QueryBuilder(
-        Transaction.find({ client: id }),
+        Transaction.find({ client: id }).sort({createdAt: -1}),
         query
     )
         .filter(match)

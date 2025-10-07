@@ -2,7 +2,6 @@ import express from 'express';
 import { UserRoutes } from '../modules/user/user.routes';
 import { AuthRoutes } from '../modules/auth/auth.routes';
 import { ClientRoutes } from '../modules/client/client.routes';
-import { CurrencyRoutes } from '../modules/currency/currency.routes';
 import { TransactionRoutes } from '../modules/transaction/transaction.routes';
 const router = express.Router();
 
@@ -10,7 +9,6 @@ const apiRoutes = [
     { path: "/user", route: UserRoutes },
     { path: "/auth", route: AuthRoutes },
     { path: "/client", route: ClientRoutes },
-    { path: "/currency", route: CurrencyRoutes },
     { path: "/transaction", route: TransactionRoutes },
 ]
 

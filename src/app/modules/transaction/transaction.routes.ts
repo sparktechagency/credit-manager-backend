@@ -1,9 +1,7 @@
 import express, { NextFunction, Response, Request } from 'express';
 import { USER_ROLES } from '../../../enums/user';
 import { ClientController } from './transaction.controller';
-import { TransactionZodValidationSchema } from './transaction.validation';
 import auth from '../../middlewares/auth';
-import validateRequest from '../../middlewares/validateRequest';
 const router = express.Router();
 
 router.route('/')

@@ -20,7 +20,7 @@ class QueryBuilder {
 
     filter(extraFilters: Record<string, any> = {}){
         const queryObj = { ...this.query, ...extraFilters };
-        const excludedFields = ['page', "date", 'limit','searchTerm'];
+        const excludedFields = ['page', "fromDate", "toDate", 'limit','searchTerm'];
         excludedFields.forEach((el) => delete queryObj[el]);
 
         this.queryModel = this.queryModel.find(queryObj);

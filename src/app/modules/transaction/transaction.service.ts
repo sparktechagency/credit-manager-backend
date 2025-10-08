@@ -63,22 +63,22 @@ const dueCreditToDB = async (id: string, payload: ITransaction): Promise<ITransa
 
 const retrieveTransactionsFromDB = async (query: FilterQuery<any>): Promise<{}> => {
 
-    const { date } = query;
+    const { fromDate, toDate } = query;
 
     let match: any = {};
 
-    if (date) {
-        const start = new Date(date);
+    if (fromDate) {
+        const start = new Date(fromDate);
         start.setHours(0, 0, 0, 0);
 
-        const end = new Date(date);
+        const end = new Date(toDate);
         end.setHours(23, 59, 59, 999);
 
         match.createdAt = { $gte: start, $lte: end };
     }
 
     const TransactionQuery = new QueryBuilder(
-        Transaction.find().sort({createdAt: -1}),
+        Transaction.find().sort({ createdAt: -1 }),
         query
     )
         .paginate()
@@ -89,7 +89,7 @@ const retrieveTransactionsFromDB = async (query: FilterQuery<any>): Promise<{}> 
             .populate("client")
             .lean()
             .exec()
-            ,
+        ,
         TransactionQuery.getPaginationInfo(),
     ]);
 
@@ -165,7 +165,7 @@ const retrieveTransactionsFromDB = async (query: FilterQuery<any>): Promise<{}> 
         transactions: result,
         totalCredit: credit[0]?.totalCredit || 0,
         totalPaid: paid[0]?.totalPaid || 0,
-        balance : Number(credit[0]?.totalCredit || 0) - Number(paid[0]?.totalPaid || 0),
+        balance: Number(credit[0]?.totalCredit || 0) - Number(paid[0]?.totalPaid || 0),
         pagination
     }
 
@@ -180,22 +180,22 @@ const clientTransactionFromDB = async (id: string, query: FilterQuery<any>): Pro
     }
 
 
-    const { date } = query;
+    const { fromDate, toDate } = query;
 
     let match: any = {};
 
-    if (date) {
-        const start = new Date(date);
+    if (fromDate) {
+        const start = new Date(fromDate);
         start.setHours(0, 0, 0, 0);
 
-        const end = new Date(date);
+        const end = new Date(toDate);
         end.setHours(23, 59, 59, 999);
 
         match.createdAt = { $gte: start, $lte: end };
     }
 
     const ClientTransactionQuery = new QueryBuilder(
-        Transaction.find({ client: id }).sort({createdAt: -1}),
+        Transaction.find({ client: id }).sort({ createdAt: -1 }),
         query
     )
         .filter(match)

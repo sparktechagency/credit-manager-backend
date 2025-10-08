@@ -71,7 +71,7 @@ const retrieveTransactionsFromDB = async (query: FilterQuery<any>): Promise<{}> 
         const start = new Date(fromDate);
         start.setHours(0, 0, 0, 0);
 
-        const end = new Date(toDate);
+        const end = new Date(toDate || fromDate);
         end.setHours(23, 59, 59, 999);
 
         match.createdAt = { $gte: start, $lte: end };
@@ -188,7 +188,7 @@ const clientTransactionFromDB = async (id: string, query: FilterQuery<any>): Pro
         const start = new Date(fromDate);
         start.setHours(0, 0, 0, 0);
 
-        const end = new Date(toDate);
+        const end = new Date(toDate || fromDate);
         end.setHours(23, 59, 59, 999);
 
         match.createdAt = { $gte: start, $lte: end };

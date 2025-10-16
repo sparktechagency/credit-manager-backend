@@ -17,6 +17,10 @@ router.route('/')
         validateRequest(createUserZodValidationSchema),
         UserController.createUser
     )
+    .put(
+        auth(USER_ROLES.SUPER_ADMIN),
+        UserController.checkUsername
+    )
     .patch(
         auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN, USER_ROLES.USER),
         fileUploadHandler(),

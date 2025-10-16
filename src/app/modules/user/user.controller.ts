@@ -16,6 +16,17 @@ const createUser = catchAsync( async (req: Request, res: Response, next: NextFun
     })
 });
 
+// register user
+const checkUsername = catchAsync( async (req: Request, res: Response, next: NextFunction) => {
+    await UserService.checkUsernameFromDB(req.body.username);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: 'Username is available',
+    })
+});
+
 // retrieved user profile
 const retrieveProfile = catchAsync(async (req: Request, res: Response) => {
     const result = await UserService.retrieveProfileFromDB(req.user as JwtPayload,);
@@ -43,5 +54,6 @@ const updateProfile = catchAsync( async (req: Request, res: Response, next: Next
 export const UserController = { 
     createUser,
     retrieveProfile, 
-    updateProfile
+    updateProfile,
+    checkUsername
 };

@@ -68,11 +68,21 @@ const retrieveTransactionsFromDB = async (query: FilterQuery<any>): Promise<{}> 
     let match: any = {};
 
     if (fromDate) {
-        const start = new Date(fromDate);
-        start.setHours(0, 0, 0, 0);
 
-        const end = new Date(toDate || fromDate);
-        end.setHours(23, 59, 59, 999);
+        const parsedFromDate = new Date(fromDate);
+        if (isNaN(parsedFromDate.getTime())) {
+            throw new Error('Invalid fromDate format.');
+        }
+        const start = new Date(parsedFromDate);
+        start.setUTCHours(0, 0, 0, 0);
+
+        let endDate = toDate || fromDate;
+        const parsedToDate = new Date(endDate);
+        if (toDate && isNaN(parsedToDate.getTime())) {
+            throw new Error('Invalid toDate format.');
+        }
+        const end = new Date(parsedToDate);
+        end.setUTCHours(23, 59, 59, 999);
 
         match.createdAt = { $gte: start, $lte: end };
     }
@@ -185,11 +195,21 @@ const clientTransactionFromDB = async (id: string, query: FilterQuery<any>): Pro
     let match: any = {};
 
     if (fromDate) {
-        const start = new Date(fromDate);
-        start.setHours(0, 0, 0, 0);
 
-        const end = new Date(toDate || fromDate);
-        end.setHours(23, 59, 59, 999);
+        const parsedFromDate = new Date(fromDate);
+        if (isNaN(parsedFromDate.getTime())) {
+            throw new Error('Invalid fromDate format.');
+        }
+        const start = new Date(parsedFromDate);
+        start.setUTCHours(0, 0, 0, 0);
+
+        let endDate = toDate || fromDate;
+        const parsedToDate = new Date(endDate);
+        if (toDate && isNaN(parsedToDate.getTime())) {
+            throw new Error('Invalid toDate format.');
+        }
+        const end = new Date(parsedToDate);
+        end.setUTCHours(23, 59, 59, 999);
 
         match.createdAt = { $gte: start, $lte: end };
     }

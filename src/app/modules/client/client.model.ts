@@ -14,18 +14,18 @@ const ClientSchema = new Schema<IClient, ClientModel>(
         },
         email: {
             type: String,
-            required: true,
+            required: false,
             immutable: true,
             unique: true,
             lowercase: true,
         },
         address: {
             type: String,
-            required: true
+            required: false
         },
         contact: {
             type: String,
-            required: true
+            required: false
         },
         credit: {
             type: Number,
@@ -38,6 +38,11 @@ const ClientSchema = new Schema<IClient, ClientModel>(
         userId: {
             type: String,
             required: false
+        },
+        username: {
+            type: String,
+            required: true,
+            unique: true,
         },
         password: {
             type: String,

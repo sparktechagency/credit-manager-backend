@@ -15,18 +15,6 @@ router.route('/')
     )
     .post(
         auth(USER_ROLES.SUPER_ADMIN),
-        async (req: Request, res: Response, next: NextFunction) => {
-            try {
-
-                const { status, ...restPayload } = req.body;
-                const Status = status ? "active" : 'inactive';
-                req.body = { ...restPayload, status: Status };
-                next();
-
-            } catch (error) {
-                res.status(500).json({ message: "Failed to Process client" });
-            }
-        },
         validateRequest(ClientZodValidationSchema),
         ClientController.createClients
     )

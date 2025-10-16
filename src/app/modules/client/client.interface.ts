@@ -3,12 +3,13 @@ import { Model, Types } from 'mongoose';
 export type IClient = {
     _id?: Types.ObjectId;
     name: string;
-    email: string;
-    address: string;
+    email?: string;
+    address?: string;
     credit: number;
     paid: number;
-    contact: string;
-    userId: string;
+    contact?: string;
+    username: string;
+    userId?: string;
     notes?: string;
     password: string;
     profile: string;

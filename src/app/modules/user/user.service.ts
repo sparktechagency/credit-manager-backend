@@ -7,6 +7,7 @@ import generateOTP from "../../../util/generateOTP";
 import { emailTemplate } from "../../../shared/emailTemplate";
 import { emailHelper } from "../../../helpers/emailHelper";
 import unlinkFile from "../../../shared/unlinkFile";
+import { Client } from "../client/client.model";
 
 const createUserToDB = async (payload: Partial<IUser>): Promise<IUser> => {
 
@@ -71,8 +72,19 @@ const updateProfileToDB = async (user: JwtPayload, payload: Partial<IUser>): Pro
     return updateDoc;
 };
 
+const checkUsernameFromDB = async (username: string): Promise<IUser | null> => {
+
+    const createUser = await Client.findOne({ username });
+    if (createUser) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'Username is already taken');
+    }
+
+    return createUser;
+};
+
 export const UserService = {
     createUserToDB,
     retrieveProfileFromDB,
-    updateProfileToDB
+    updateProfileToDB,
+    checkUsernameFromDB
 };

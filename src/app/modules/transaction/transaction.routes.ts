@@ -35,7 +35,6 @@ router.route("/statistic")
 
 router.route('/:id')
     .get(
-        auth(USER_ROLES.SUPER_ADMIN),
         ClientController.clientTransaction
     )
     .post(

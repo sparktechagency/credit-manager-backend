@@ -1,11 +1,15 @@
 import { IClient } from "./client.interface";
-import { JwtPayload } from 'jsonwebtoken';
+import { JwtPayload, Secret } from 'jsonwebtoken';
 import { Client } from "./client.model";
 import { StatusCodes } from "http-status-codes";
 import ApiError from "../../../errors/ApiErrors";
 import mongoose, { FilterQuery, mongo } from "mongoose";
 import QueryBuilder from "../../../helpers/QueryBuilder";
 import { Transaction } from "../transaction/transaction.model";
+import bcrypt from "bcrypt";
+import config from "../../../config";
+import { User } from "../user/user.model";
+import { jwtHelper } from "../../../helpers/jwtHelper";
 
 const createClientToDB = async (payload: Partial<IClient>): Promise<IClient> => {
 
@@ -259,6 +263,72 @@ const clientStatisticsFromDB = async () => {
     return clientStatisticsArray;
 };
 
+const deleteClientFromDB = async (id: string): Promise<IClient> => {
+
+    const createClient = await Client.findByIdAndDelete(id);
+    if (!createClient) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to delete Client');
+    }
+
+    return createClient;
+};
+
+
+const changeClientPasswordToDB = async ( user: string, payload: any) => {
+
+    const { currentPassword, newPassword, confirmPassword } = payload;
+    const isExistUser = await Client.findById(user).select('+password');
+    if (!isExistUser) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Client doesn't exist!");
+    }
+  
+    //current password match
+    if ( currentPassword && !(await User.isMatchPassword(currentPassword, isExistUser.password))) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'Password is incorrect');
+    }
+  
+    //newPassword and current password
+    if (currentPassword === newPassword) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'Please give different password from current password');
+    }
+
+    //new password and confirm password check
+    if (newPassword !== confirmPassword) {
+        throw new ApiError( StatusCodes.BAD_REQUEST, "Password and Confirm password doesn't matched");
+    }
+  
+    //hash password
+    const hashPassword = await bcrypt.hash( newPassword, Number(config.bcrypt_salt_rounds));
+  
+    const updateData = {
+        password: hashPassword,
+    };
+
+    await Client.findOneAndUpdate({ _id: user }, updateData, { new: true });
+};
+
+const loginClientFromDB = async (payload: any) => {
+
+    const { username, password } = payload;
+
+    const isExistClient:any = await Client.findOne({ username: username }).select('+password');
+    if (!isExistClient) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
+    }
+  
+    //check verified and status
+    if (isExistClient === "inactive") {
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'Please contact with admin to activate your account!');
+    }
+  
+    //check match password
+    if ( password && !(await User.isMatchPassword(password, isExistClient.password))) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'Password is incorrect!');
+    }
+
+    return isExistClient;
+};
+
 export const ClientService = {
     createClientToDB,
     retrieveClientsFromDB,
@@ -266,5 +336,8 @@ export const ClientService = {
     transactionSummaryFromDB,
     deactivedClientToDB,
     clientStatisticsFromDB,
-    retrieveActiveClientsFromDB
+    retrieveActiveClientsFromDB,
+    deleteClientFromDB,
+    changeClientPasswordToDB,
+    loginClientFromDB
 };

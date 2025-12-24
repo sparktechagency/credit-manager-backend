@@ -35,6 +35,10 @@ router.route('/')
         ClientController.updateClientProfile
     );
 
+router.post('/login',
+    ClientController.clientLogin
+);
+
 router.route('/summary')
     .get(
         auth(USER_ROLES.SUPER_ADMIN),
@@ -54,6 +58,10 @@ router.route('/active-statistic')
     );
 
 router.route('/:id')
+    .post(
+        auth(USER_ROLES.SUPER_ADMIN),
+        ClientController.changeClientPassword
+    )
     .patch(
         auth(USER_ROLES.SUPER_ADMIN),
         ClientController.deactivedClient
@@ -61,6 +69,10 @@ router.route('/:id')
     .put(
         auth(USER_ROLES.SUPER_ADMIN),
         ClientController.updateClientProfile
+    )
+    .delete(
+        auth(USER_ROLES.SUPER_ADMIN),
+        ClientController.deleteClient
     )
 
 export const ClientRoutes = router;

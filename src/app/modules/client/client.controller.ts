@@ -84,6 +84,40 @@ const activeClientStatics = catchAsync( async (req: Request, res: Response, next
     });
 });
 
+const deleteClient = catchAsync( async (req: Request, res: Response, next: NextFunction) => {
+    const result = await ClientService.deleteClientFromDB(req.params.id);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: 'Client deleted successfully',
+        data: result
+    });
+});
+
+const changeClientPassword = catchAsync( async (req: Request, res: Response, next: NextFunction) => {
+    const result = await ClientService.changeClientPasswordToDB(req.params.id, req.body);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: 'Client password changed successfully',
+        data: result
+    });
+});
+
+const clientLogin = catchAsync( async (req: Request, res: Response, next: NextFunction) => {
+    const result = await ClientService.loginClientFromDB(req.body);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: 'Client logged in successfully',
+        data: result
+    });
+});
+
+
 export const ClientController = { 
     createClients,
     retrieveClients, 
@@ -91,5 +125,8 @@ export const ClientController = {
     retrieveSummary,
     deactivedClient,
     clientStatics,
-    activeClientStatics
+    activeClientStatics,
+    deleteClient,
+    changeClientPassword,
+    clientLogin
 };

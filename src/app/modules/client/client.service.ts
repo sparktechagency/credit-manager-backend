@@ -276,22 +276,12 @@ const deleteClientFromDB = async (id: string): Promise<IClient> => {
 
 const changeClientPasswordToDB = async ( user: string, payload: any) => {
 
-    const { currentPassword, newPassword, confirmPassword } = payload;
+    const { newPassword, confirmPassword } = payload;
     const isExistUser = await Client.findById(user).select('+password');
     if (!isExistUser) {
         throw new ApiError(StatusCodes.BAD_REQUEST, "Client doesn't exist!");
     }
   
-    //current password match
-    if ( currentPassword && !(await User.isMatchPassword(currentPassword, isExistUser.password))) {
-        throw new ApiError(StatusCodes.BAD_REQUEST, 'Password is incorrect');
-    }
-  
-    //newPassword and current password
-    if (currentPassword === newPassword) {
-        throw new ApiError(StatusCodes.BAD_REQUEST, 'Please give different password from current password');
-    }
-
     //new password and confirm password check
     if (newPassword !== confirmPassword) {
         throw new ApiError( StatusCodes.BAD_REQUEST, "Password and Confirm password doesn't matched");

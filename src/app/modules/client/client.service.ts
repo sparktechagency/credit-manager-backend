@@ -27,9 +27,9 @@ const retrieveClientsFromDB = async (query: FilterQuery<any>): Promise<{ clients
         Client.find(),
         query
     )
-    .paginate()
-    .filter()
-    .search(["name", "email", "address", "contact"]);
+        .paginate()
+        .filter()
+        .search(["name", "email", "address", "contact"]);
 
     const [clients, pagination] = await Promise.all([
         TransactionQuery.queryModel
@@ -85,7 +85,7 @@ const retrieveClientsFromDB = async (query: FilterQuery<any>): Promise<{ clients
 const retrieveActiveClientsFromDB = async (query: FilterQuery<any>): Promise<{ clients: IClient[], pagination: any }> => {
 
     const TransactionQuery = new QueryBuilder(
-        Client.find({status: "active"}),
+        Client.find({ status: "active" }),
         query
     ).paginate();
 
@@ -142,6 +142,20 @@ const retrieveActiveClientsFromDB = async (query: FilterQuery<any>): Promise<{ c
 
 const transactionSummaryFromDB = async (): Promise<{ totalCredit: number, balance: number, totalPaid: number }> => {
 
+    const today = new Date();
+
+    const start = new Date(today);
+    start.setUTCHours(0, 0, 0, 0);
+
+    const end = new Date(today);
+    end.setUTCHours(23, 59, 59, 999);
+
+    const dateMatch = {
+        createdAt: { $gte: start, $lte: end }
+    };
+
+
+
     const clientsIDs = await Client.find({ status: "active" }).distinct("_id");
 
     // Total Credit
@@ -149,6 +163,21 @@ const transactionSummaryFromDB = async (): Promise<{ totalCredit: number, balanc
         {
             $match: {
                 type: "credit",
+                ...dateMatch
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalCredit: { $sum: "$amount" }
+            }
+        }
+    ]);
+
+    const totalCredit = await Transaction.aggregate([
+        {
+            $match: {
+                type: "credit"
             }
         },
         {
@@ -164,6 +193,21 @@ const transactionSummaryFromDB = async (): Promise<{ totalCredit: number, balanc
         {
             $match: {
                 type: "paid",
+                ...dateMatch
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalPaid: { $sum: "$amount" }
+            }
+        }
+    ]);
+
+    const totalPaid = await Transaction.aggregate([
+        {
+            $match: {
+                type: "paid"
             }
         },
         {
@@ -178,7 +222,7 @@ const transactionSummaryFromDB = async (): Promise<{ totalCredit: number, balanc
         totalClient: clientsIDs?.length || 0,
         totalCredit: credit?.length > 0 ? credit[0]?.totalCredit : 0 || 0,
         totalPaid: paid?.length > 0 ? paid[0]?.totalPaid : 0 || 0,
-        balance: (credit?.length > 0 ? credit[0]?.totalCredit : 0) - (paid?.length > 0 ? paid[0]?.totalPaid : 0) || 0
+        balance: (totalCredit?.length > 0 ? totalCredit[0]?.totalCredit : 0) - (totalPaid?.length > 0 ? totalPaid[0]?.totalPaid : 0) || 0
     }
 
     return data;
@@ -274,22 +318,22 @@ const deleteClientFromDB = async (id: string): Promise<IClient> => {
 };
 
 
-const changeClientPasswordToDB = async ( user: string, payload: any) => {
+const changeClientPasswordToDB = async (user: string, payload: any) => {
 
     const { newPassword, confirmPassword } = payload;
     const isExistUser = await Client.findById(user).select('+password');
     if (!isExistUser) {
         throw new ApiError(StatusCodes.BAD_REQUEST, "Client doesn't exist!");
     }
-  
+
     //new password and confirm password check
     if (newPassword !== confirmPassword) {
-        throw new ApiError( StatusCodes.BAD_REQUEST, "Password and Confirm password doesn't matched");
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Password and Confirm password doesn't matched");
     }
-  
+
     //hash password
-    const hashPassword = await bcrypt.hash( newPassword, Number(config.bcrypt_salt_rounds));
-  
+    const hashPassword = await bcrypt.hash(newPassword, Number(config.bcrypt_salt_rounds));
+
     const updateData = {
         password: hashPassword,
     };
@@ -301,18 +345,18 @@ const loginClientFromDB = async (payload: any) => {
 
     const { username, password } = payload;
 
-    const isExistClient:any = await Client.findOne({ username: username }).select('+password');
+    const isExistClient: any = await Client.findOne({ username: username }).select('+password');
     if (!isExistClient) {
         throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
     }
-  
+
     //check verified and status
     if (isExistClient === "inactive") {
         throw new ApiError(StatusCodes.BAD_REQUEST, 'Please contact with admin to activate your account!');
     }
-  
+
     //check match password
-    if ( password && !(await User.isMatchPassword(password, isExistClient.password))) {
+    if (password && !(await User.isMatchPassword(password, isExistClient.password))) {
         throw new ApiError(StatusCodes.BAD_REQUEST, 'Password is incorrect!');
     }
 
